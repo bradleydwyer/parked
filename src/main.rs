@@ -1,0 +1,92 @@
+use clap::{Parser, Subcommand};
+use domain_check::checker;
+use domain_check::mcp::DomainCheckMcp;
+use rmcp::{ServiceExt, transport::stdio};
+
+#[derive(Parser)]
+#[command(
+    name = "domain-check",
+    about = "Tiered domain availability checker (DNS → WHOIS → RDAP)",
+    version
+)]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Command>,
+
+    /// Domain names to check
+    domains: Vec<String>,
+
+    /// Output results as JSON
+    #[arg(short, long)]
+    json: bool,
+
+    /// Show tier-by-tier details
+    #[arg(short, long)]
+    verbose: bool,
+}
+
+#[derive(Subcommand)]
+enum Command {
+    /// Start MCP server (stdio transport)
+    Mcp,
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let cli = Cli::parse();
+
+    if let Some(Command::Mcp) = cli.command {
+        let server = DomainCheckMcp::new();
+        let service = server.serve(stdio()).await?;
+        service.waiting().await?;
+        return Ok(());
+    }
+
+    if cli.domains.is_empty() {
+        eprintln!("Usage: domain-check [OPTIONS] <DOMAINS>...");
+        eprintln!("       domain-check mcp");
+        eprintln!();
+        eprintln!("Run 'domain-check --help' for more information.");
+        std::process::exit(1);
+    }
+
+    let results = checker::check_domains(&cli.domains).await;
+
+    if cli.json {
+        println!("{}", serde_json::to_string_pretty(&results)?);
+    } else {
+        for result in &results {
+            if cli.verbose {
+                println!(
+                    "{:<30} {:<12} ({}, {}ms)",
+                    result.domain, result.available, result.determined_by, result.elapsed_ms
+                );
+                if let Some(ref dns) = result.details.dns {
+                    println!(
+                        "  DNS: has_records={}, types={:?}",
+                        dns.has_records, dns.record_types
+                    );
+                }
+                if let Some(ref whois) = result.details.whois {
+                    println!(
+                        "  WHOIS: found={}, registrar={:?}",
+                        whois.found, whois.registrar
+                    );
+                }
+                if let Some(ref rdap) = result.details.rdap {
+                    println!(
+                        "  RDAP: status={}, found={}, registrar={:?}",
+                        rdap.status_code, rdap.found, rdap.registrar
+                    );
+                }
+            } else {
+                println!(
+                    "{:<30} {:<12} ({}, {}ms)",
+                    result.domain, result.available, result.determined_by, result.elapsed_ms
+                );
+            }
+        }
+    }
+
+    Ok(())
+}
