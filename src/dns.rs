@@ -1,6 +1,6 @@
 use crate::types::DnsInfo;
-use hickory_resolver::proto::rr::RecordType;
 use hickory_resolver::TokioResolver;
+use hickory_resolver::proto::rr::RecordType;
 
 pub async fn lookup(domain: &str) -> Result<DnsInfo, String> {
     let resolver = TokioResolver::builder_tokio()

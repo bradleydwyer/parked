@@ -2,7 +2,7 @@ use crate::types::WhoisInfo;
 use std::collections::HashMap;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
-use tokio::time::{timeout, Duration};
+use tokio::time::{Duration, timeout};
 
 const WHOIS_TIMEOUT: Duration = Duration::from_secs(5);
 

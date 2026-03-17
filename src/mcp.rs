@@ -1,10 +1,7 @@
 use crate::checker;
 use rmcp::{
-    ErrorData as McpError, ServerHandler,
-    handler::server::tool::ToolRouter,
-    handler::server::wrapper::Parameters,
-    model::*,
-    tool_handler, tool_router,
+    ErrorData as McpError, ServerHandler, handler::server::tool::ToolRouter,
+    handler::server::wrapper::Parameters, model::*, tool_handler, tool_router,
 };
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -39,7 +36,9 @@ impl ParkedMcp {
         }
     }
 
-    #[rmcp::tool(description = "Check if a domain name is available for registration. Uses a tiered approach: DNS lookup first, then WHOIS, then RDAP for definitive results.")]
+    #[rmcp::tool(
+        description = "Check if a domain name is available for registration. Uses a tiered approach: DNS lookup first, then WHOIS, then RDAP for definitive results."
+    )]
     async fn check_domain(
         &self,
         Parameters(params): Parameters<CheckDomainParams>,
@@ -50,13 +49,18 @@ impl ParkedMcp {
         Ok(CallToolResult::success(vec![Content::text(json)]))
     }
 
-    #[rmcp::tool(description = "Check multiple domain names for availability. Runs lookups concurrently for efficiency.")]
+    #[rmcp::tool(
+        description = "Check multiple domain names for availability. Runs lookups concurrently for efficiency."
+    )]
     async fn check_domains(
         &self,
         Parameters(params): Parameters<CheckDomainsParams>,
     ) -> Result<CallToolResult, McpError> {
         if params.domains.is_empty() {
-            return Err(McpError::invalid_params("domains list cannot be empty", None));
+            return Err(McpError::invalid_params(
+                "domains list cannot be empty",
+                None,
+            ));
         }
         if params.domains.len() > 50 {
             return Err(McpError::invalid_params(

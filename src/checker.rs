@@ -1,8 +1,8 @@
 use crate::types::*;
 use crate::{dns, rdap, whois};
+use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::Semaphore;
-use std::sync::Arc;
 
 pub async fn check_domain(domain: &str) -> DomainResult {
     let start = Instant::now();
