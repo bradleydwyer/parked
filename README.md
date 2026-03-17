@@ -1,5 +1,9 @@
 # parked
 
+<p align="center">
+  <img src="logos/parked-logo.png" width="256" alt="parked logo" />
+</p>
+
 Check if a domain name is registered. Uses tiered lookups: DNS first (fast), then WHOIS, then RDAP.
 
 Also runs as an MCP server.
