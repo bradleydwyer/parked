@@ -20,7 +20,13 @@ It works as both a standalone CLI tool and as an [MCP](https://modelcontextproto
 
 ## Installation
 
-### From source
+### Homebrew (macOS)
+
+```bash
+brew install bradleydwyer/tap/domain-check
+```
+
+### From source (requires Rust 1.85+)
 
 ```bash
 git clone https://github.com/bradleydwyer/domain-check.git
