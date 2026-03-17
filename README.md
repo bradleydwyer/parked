@@ -1,54 +1,27 @@
 # domain-check
 
-Tiered domain availability checker (DNS → WHOIS → RDAP) with CLI and MCP server.
+Check if a domain name is registered. Uses tiered lookups: DNS first (fast), then WHOIS, then RDAP.
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+Also runs as an MCP server.
 
-## About
-
-`domain-check` determines whether a domain name is registered by querying progressively authoritative sources. It starts with a fast DNS lookup, falls back to WHOIS, and finally checks RDAP for a definitive answer. This tiered approach keeps most lookups fast while still handling edge cases.
-
-It works as both a standalone CLI tool and as an [MCP](https://modelcontextprotocol.io/) server, so AI assistants like Claude can check domain availability directly.
-
-## Features
-
-- **Tiered lookups** — DNS first (fast), then WHOIS, then RDAP. Stops as soon as registration is confirmed.
-- **Concurrent batch checks** — Look up multiple domains in parallel with a configurable concurrency limit.
-- **MCP server** — Expose `check_domain` and `check_domains` as tools over stdio transport.
-- **JSON output** — Machine-readable results with per-tier details and timing.
-- **Broad TLD support** — Built-in WHOIS server mappings for 30+ TLDs, plus IANA bootstrap for RDAP.
-
-## Installation
-
-### Homebrew (macOS)
+## Install
 
 ```bash
 brew install bradleydwyer/tap/domain-check
 ```
 
-### From source (requires Rust 1.85+)
+Or from source (Rust 1.85+):
 
 ```bash
-git clone https://github.com/bradleydwyer/domain-check.git
-cd domain-check
-cargo build --release
+cargo install --git https://github.com/bradleydwyer/domain-check
 ```
-
-The binary will be at `target/release/domain-check`.
-
-### Requirements
-
-- Rust 1.85+ (edition 2024)
 
 ## Usage
 
-### Check a single domain
-
-```bash
-domain-check example.com
-```
+### Check a domain
 
 ```
+$ domain-check example.com
 example.com                    REGISTERED   (dns, 45ms)
 ```
 
@@ -64,7 +37,7 @@ domain-check example.com xyznotregistered123.com google.com
 domain-check -v example.com
 ```
 
-Shows tier-by-tier details including DNS record types, WHOIS registrar, and RDAP status.
+Shows tier-by-tier details: DNS record types, WHOIS registrar, RDAP status.
 
 ### JSON output
 
@@ -91,15 +64,18 @@ domain-check -j example.com
 
 ### MCP server
 
-Start the MCP server over stdio:
-
 ```bash
 domain-check mcp
 ```
 
-#### Claude Code configuration
+Two tools over stdio:
 
-Add to your MCP settings:
+| Tool | Description |
+|------|-------------|
+| `check_domain` | Check a single domain |
+| `check_domains` | Check up to 50 domains concurrently |
+
+Claude Code config:
 
 ```json
 {
@@ -112,43 +88,18 @@ Add to your MCP settings:
 }
 ```
 
-The server exposes two tools:
+## How it works
 
-| Tool | Description |
-|------|-------------|
-| `check_domain` | Check a single domain for availability |
-| `check_domains` | Check up to 50 domains concurrently |
+Each domain goes through up to three tiers:
 
-## How It Works
+1. **DNS** - Queries NS, A, and AAAA records. If any exist, the domain is registered. This catches most cases in under 50ms.
+2. **WHOIS** - Connects to the TLD's WHOIS server (port 43). Parses the response for registrar info and "not found" patterns.
+3. **RDAP** - Fetches the IANA bootstrap file to find the right server, then queries the API. A 404 means available.
 
-Each domain is checked through up to three tiers:
+If a tier confirms registration, later tiers are skipped. If all tiers are inconclusive, the result is `unknown`.
 
-1. **DNS** — Queries NS, A, and AAAA records using [hickory-resolver](https://github.com/hickory-dns/hickory-dns). If any records exist, the domain is registered.
-2. **WHOIS** — Connects to the appropriate WHOIS server (port 43) for the domain's TLD. Parses the response for registrar info and "not found" patterns.
-3. **RDAP** — Fetches the IANA RDAP bootstrap file to find the correct server, then queries the RDAP API. A 404 means the domain is available.
-
-If a tier confirms registration, later tiers are skipped. If all tiers fail or are inconclusive, the result is `unknown`.
-
-## Contributing
-
-Contributions are welcome! Please open an issue or pull request.
-
-### Development setup
-
-```bash
-git clone https://github.com/bradleydwyer/domain-check.git
-cd domain-check
-cargo build
-```
-
-### Running
-
-```bash
-cargo run -- example.com
-cargo run -- -j -v example.com google.com
-cargo run -- mcp
-```
+Built-in WHOIS server mappings for 30+ TLDs, plus IANA bootstrap for RDAP.
 
 ## License
 
-domain-check is licensed under the MIT license. See the [`LICENSE`](LICENSE) file for details.
+MIT
