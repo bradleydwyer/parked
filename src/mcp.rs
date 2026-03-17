@@ -21,18 +21,18 @@ pub struct CheckDomainsParams {
     pub domains: Vec<String>,
 }
 
-pub struct DomainCheckMcp {
+pub struct ParkedMcp {
     tool_router: ToolRouter<Self>,
 }
 
-impl Default for DomainCheckMcp {
+impl Default for ParkedMcp {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[tool_router]
-impl DomainCheckMcp {
+impl ParkedMcp {
     pub fn new() -> Self {
         Self {
             tool_router: Self::tool_router(),
@@ -72,7 +72,7 @@ impl DomainCheckMcp {
 }
 
 #[tool_handler]
-impl ServerHandler for DomainCheckMcp {
+impl ServerHandler for ParkedMcp {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
             instructions: Some(

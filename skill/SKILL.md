@@ -1,8 +1,8 @@
 ---
-name: domain-check
+name: parked
 description: "Check if a domain name is registered or available. Uses tiered lookups (DNS, WHOIS, RDAP) for fast, reliable results. Use when a user wants to check domain availability, find unregistered domains, or verify registration status."
 allowed-tools:
-  - Bash(domain-check:*)
+  - Bash(parked:*)
 user-invocable: true
 argument-hint: "<domain or space-separated domains>"
 metadata:
@@ -11,7 +11,7 @@ metadata:
   status: experimental
 ---
 
-# domain-check -- Domain Availability Lookup
+# parked -- Domain Availability Lookup
 
 Checks whether domain names are registered using tiered lookups: DNS first (fast), then WHOIS, then RDAP. Each tier adds certainty at the cost of latency. Most lookups resolve at the DNS tier in under 100ms.
 
@@ -27,10 +27,10 @@ Always use `-j` for JSON output so results can be parsed reliably.
 
 ```bash
 # Single domain
-domain-check -j example.com
+parked -j example.com
 
 # Multiple domains
-domain-check -j foo.com bar.dev baz.io
+parked -j foo.com bar.dev baz.io
 ```
 
 ## JSON Output
@@ -45,7 +45,7 @@ Each result contains:
 
 ## Workflow
 
-1. Run `domain-check -j` with the requested domain(s).
+1. Run `parked -j` with the requested domain(s).
 2. Parse the JSON output.
 3. Report results clearly: which domains are available, which are registered, and which came back unknown.
 4. If the user is exploring options, suggest checking variations (alternate TLDs, prefixes, etc.) and offer to run those checks.
@@ -55,7 +55,7 @@ Each result contains:
 If debugging or the user wants tier-by-tier details in human-readable form:
 
 ```bash
-domain-check -v example.com
+parked -v example.com
 ```
 
 This is for diagnostics only. Always prefer `-j` for normal operation.

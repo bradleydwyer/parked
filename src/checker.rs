@@ -42,6 +42,14 @@ pub async fn check_domain(domain: &str) -> DomainResult {
                     details,
                     elapsed_ms: start.elapsed().as_millis() as u64,
                 };
+            } else {
+                return DomainResult {
+                    domain,
+                    available: Availability::Available,
+                    determined_by: Tier::Whois,
+                    details,
+                    elapsed_ms: start.elapsed().as_millis() as u64,
+                };
             }
         }
         Err(_) => {

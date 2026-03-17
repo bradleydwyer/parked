@@ -55,10 +55,10 @@ jobs:
         env:
           SOURCE_SHA: ${{ steps.source.outputs.sha256 }}
         run: |
-          TAPDIR="$(brew --repository)/Library/Taps/local/homebrew-domain-check/Formula"
+          TAPDIR="$(brew --repository)/Library/Taps/local/homebrew-parked/Formula"
           mkdir -p "$TAPDIR"
-          cat > "$TAPDIR/domain-check.rb" <<FORMULA
-          class DomainCheck < Formula
+          cat > "$TAPDIR/parked.rb" <<FORMULA
+          class Parked < Formula
             desc "Tiered domain availability checker (DNS, WHOIS, RDAP) with CLI and MCP server"
             homepage "https://github.com/${REPO}"
             url "https://github.com/${REPO}/archive/refs/tags/${TAG}.tar.gz"
@@ -72,13 +72,13 @@ jobs:
             end
 
             test do
-              assert_match "domain-check", shell_output("#{bin}/domain-check --version")
+              assert_match "parked", shell_output("#{bin}/parked --version")
             end
           end
           FORMULA
 
       - name: Build bottle
-        run: brew install --build-bottle local/domain-check/domain-check
+        run: brew install --build-bottle local/parked/parked
 
       - name: Package bottle
         run: |
@@ -86,25 +86,25 @@ jobs:
           brew bottle \
             --no-rebuild \
             --root-url="https://github.com/${REPO}/releases/download/${TAG}" \
-            local/domain-check/domain-check
+            local/parked/parked
 
       - name: Rename bottle to single-dash filename
         run: |
           cd "$RUNNER_TEMP"
-          for f in domain-check--*.tar.gz; do
-            mv "$f" "${f/domain-check--/domain-check-}"
+          for f in parked--*.tar.gz; do
+            mv "$f" "${f/parked--/parked-}"
           done
 
       - name: Upload bottle to release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          BOTTLE=$(ls "${RUNNER_TEMP}"/domain-check-*.tar.gz)
+          BOTTLE=$(ls "${RUNNER_TEMP}"/parked-*.tar.gz)
           gh release upload "$TAG" "$BOTTLE" --clobber
 
       - name: Save bottle SHA256
         run: |
-          BOTTLE=$(ls "${RUNNER_TEMP}"/domain-check-*.tar.gz)
+          BOTTLE=$(ls "${RUNNER_TEMP}"/parked-*.tar.gz)
           SHA=$(shasum -a 256 "$BOTTLE" | awk '{print $1}')
           mkdir -p bottle-sha
           echo "$SHA" > "bottle-sha/${{ matrix.bottle_tag }}"
@@ -127,7 +127,7 @@ jobs:
         id: source
         run: |
           curl -fsSL -o source.tar.gz \
-            "https://github.com/bradleydwyer/domain-check/archive/refs/tags/${TAG}.tar.gz"
+            "https://github.com/bradleydwyer/parked/archive/refs/tags/${TAG}.tar.gz"
           SHA=$(sha256sum source.tar.gz | awk '{print $1}')
           echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
 
@@ -159,16 +159,16 @@ jobs:
           ARM64_SEQUOIA_SHA: ${{ steps.bottles.outputs.arm64_sequoia }}
           ARM64_SONOMA_SHA: ${{ steps.bottles.outputs.arm64_sonoma }}
         run: |
-          cat > homebrew-tap/Formula/domain-check.rb <<EOF
-          class DomainCheck < Formula
+          cat > homebrew-tap/Formula/parked.rb <<EOF
+          class Parked < Formula
             desc "Tiered domain availability checker (DNS, WHOIS, RDAP) with CLI and MCP server"
-            homepage "https://github.com/bradleydwyer/domain-check"
-            url "https://github.com/bradleydwyer/domain-check/archive/refs/tags/${TAG}.tar.gz"
+            homepage "https://github.com/bradleydwyer/parked"
+            url "https://github.com/bradleydwyer/parked/archive/refs/tags/${TAG}.tar.gz"
             sha256 "${SOURCE_SHA}"
             license "MIT"
 
             bottle do
-              root_url "https://github.com/bradleydwyer/domain-check/releases/download/${TAG}"
+              root_url "https://github.com/bradleydwyer/parked/releases/download/${TAG}"
               sha256 cellar: :any_skip_relocation, arm64_tahoe:   "${ARM64_TAHOE_SHA}"
               sha256 cellar: :any_skip_relocation, arm64_sequoia: "${ARM64_SEQUOIA_SHA}"
               sha256 cellar: :any_skip_relocation, arm64_sonoma:  "${ARM64_SONOMA_SHA}"
@@ -181,16 +181,19 @@ jobs:
             end
 
             test do
-              assert_match "domain-check", shell_output("#{bin}/domain-check --version")
+              assert_match "parked", shell_output("#{bin}/parked --version")
             end
           end
           EOF
+
+      - name: Remove old domain-check formula if present
+        run: rm -f homebrew-tap/Formula/domain-check.rb
 
       - name: Commit and push formula update
         run: |
           cd homebrew-tap
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Formula/domain-check.rb
-          git commit -m "Update domain-check to ${TAG}"
+          git add Formula/
+          git commit -m "Update parked to ${TAG}"
           git push

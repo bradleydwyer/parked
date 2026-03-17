@@ -1,11 +1,12 @@
-use clap::{Parser, Subcommand};
-use domain_check::checker;
-use domain_check::mcp::DomainCheckMcp;
+use parked::checker;
+use parked::mcp::ParkedMcp;
 use rmcp::{ServiceExt, transport::stdio};
+
+use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(
-    name = "domain-check",
+    name = "parked",
     about = "Tiered domain availability checker (DNS → WHOIS → RDAP)",
     version
 )]
@@ -36,17 +37,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     if let Some(Command::Mcp) = cli.command {
-        let server = DomainCheckMcp::new();
+        let server = ParkedMcp::new();
         let service = server.serve(stdio()).await?;
         service.waiting().await?;
         return Ok(());
     }
 
     if cli.domains.is_empty() {
-        eprintln!("Usage: domain-check [OPTIONS] <DOMAINS>...");
-        eprintln!("       domain-check mcp");
+        eprintln!("Usage: parked [OPTIONS] <DOMAINS>...");
+        eprintln!("       parked mcp");
         eprintln!();
-        eprintln!("Run 'domain-check --help' for more information.");
+        eprintln!("Run 'parked --help' for more information.");
         std::process::exit(1);
     }
 

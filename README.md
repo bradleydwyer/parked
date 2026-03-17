@@ -1,4 +1,4 @@
-# domain-check
+# parked
 
 Check if a domain name is registered. Uses tiered lookups: DNS first (fast), then WHOIS, then RDAP.
 
@@ -7,13 +7,13 @@ Also runs as an MCP server.
 ## Install
 
 ```bash
-brew install bradleydwyer/tap/domain-check
+brew install bradleydwyer/tap/parked
 ```
 
 Or from source (Rust 1.85+):
 
 ```bash
-cargo install --git https://github.com/bradleydwyer/domain-check
+cargo install --git https://github.com/bradleydwyer/parked
 ```
 
 ## Usage
@@ -21,20 +21,20 @@ cargo install --git https://github.com/bradleydwyer/domain-check
 ### Check a domain
 
 ```
-$ domain-check example.com
+$ parked example.com
 example.com                    REGISTERED   (dns, 45ms)
 ```
 
 ### Check multiple domains
 
 ```bash
-domain-check example.com xyznotregistered123.com google.com
+parked example.com xyznotregistered123.com google.com
 ```
 
 ### Verbose output
 
 ```bash
-domain-check -v example.com
+parked -v example.com
 ```
 
 Shows tier-by-tier details: DNS record types, WHOIS registrar, RDAP status.
@@ -42,7 +42,7 @@ Shows tier-by-tier details: DNS record types, WHOIS registrar, RDAP status.
 ### JSON output
 
 ```bash
-domain-check -j example.com
+parked -j example.com
 ```
 
 ```json
@@ -65,7 +65,7 @@ domain-check -j example.com
 ### MCP server
 
 ```bash
-domain-check mcp
+parked mcp
 ```
 
 Two tools over stdio:
@@ -80,8 +80,8 @@ Claude Code config:
 ```json
 {
   "mcpServers": {
-    "domain-check": {
-      "command": "/path/to/domain-check",
+    "parked": {
+      "command": "/path/to/parked",
       "args": ["mcp"]
     }
   }
