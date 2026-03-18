@@ -2,18 +2,15 @@ use parked::checker::{self, CheckOptions};
 
 const COMMON_TLDS: &[&str] = &[
     // Generic
-    "com", "net", "org", "info", "biz",
-    // Tech / dev
-    "io", "dev", "app", "sh", "ai", "co", "run", "build", "codes", "tools", "tech", "cloud",
-    "pro", "engineer", "software",
-    // Short / brandable
-    "xyz", "me", "cc", "tv", "gg", "lol", "wtf", "fyi", "one", "plus",
-    // Descriptive
+    "com", "net", "org", "info", "biz", // Tech / dev
+    "io", "dev", "app", "sh", "ai", "co", "run", "build", "codes", "tools", "tech", "cloud", "pro",
+    "engineer", "software", // Short / brandable
+    "xyz", "me", "cc", "tv", "gg", "lol", "wtf", "fyi", "one", "plus", // Descriptive
     "land", "page", "site", "space", "zone", "works", "world", "live", "team",
     // Country codes
-    "us", "uk", "de", "fr", "nl", "se", "no", "fi", "ch", "at", "be", "dk", "ie", "nz", "au",
-    "ca", "mx", "br", "ar", "jp", "kr", "tw", "hk", "sg", "ph", "th", "vn", "id", "my", "za",
-    "in", "it", "is", "to", "fm", "ly", "so",
+    "us", "uk", "de", "fr", "nl", "se", "no", "fi", "ch", "at", "be", "dk", "ie", "nz", "au", "ca",
+    "mx", "br", "ar", "jp", "kr", "tw", "hk", "sg", "ph", "th", "vn", "id", "my", "za", "in", "it",
+    "is", "to", "fm", "ly", "so",
 ];
 
 fn expand_all_tlds(names: &[String]) -> Vec<String> {

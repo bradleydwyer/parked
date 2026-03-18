@@ -283,10 +283,7 @@ mod tests {
             "example.com",
             "https://sub.example.com/"
         ));
-        assert!(is_different_domain(
-            "foo.com",
-            "https://bar.com/redirect"
-        ));
+        assert!(is_different_domain("foo.com", "https://bar.com/redirect"));
     }
 
     #[test]
@@ -301,9 +298,6 @@ mod tests {
     fn test_strip_tags() {
         assert_eq!(strip_tags("<b>hello</b>"), "hello");
         assert_eq!(strip_tags("<script>var x=1;</script>visible"), "visible");
-        assert_eq!(
-            strip_tags("<div><p>text</p></div>"),
-            "text"
-        );
+        assert_eq!(strip_tags("<div><p>text</p></div>"), "text");
     }
 }
