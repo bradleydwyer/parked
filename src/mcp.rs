@@ -1,4 +1,4 @@
-use crate::checker;
+use crate::checker::{self, CheckOptions};
 use rmcp::{
     ErrorData as McpError, ServerHandler, handler::server::tool::ToolRouter,
     handler::server::wrapper::Parameters, model::*, tool_handler, tool_router,
@@ -10,12 +10,20 @@ use serde::Deserialize;
 pub struct CheckDomainParams {
     #[schemars(description = "The domain name to check (e.g. \"example.com\")")]
     pub domain: String,
+    #[schemars(
+        description = "Whether to probe registered domains to classify them as active, parked, redirect, or unreachable (default: true)"
+    )]
+    pub probe: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct CheckDomainsParams {
     #[schemars(description = "List of domain names to check")]
     pub domains: Vec<String>,
+    #[schemars(
+        description = "Whether to probe registered domains to classify them as active, parked, redirect, or unreachable (default: true)"
+    )]
+    pub probe: Option<bool>,
 }
 
 pub struct ParkedMcp {
@@ -37,20 +45,23 @@ impl ParkedMcp {
     }
 
     #[rmcp::tool(
-        description = "Check if a domain name is available for registration. Uses a tiered approach: DNS lookup first, then WHOIS, then RDAP for definitive results."
+        description = "Check if a domain name is available for registration. Uses a tiered approach: DNS lookup first, then WHOIS, then RDAP. For registered domains, probes the site to classify it as active, parked, redirect, or unreachable."
     )]
     async fn check_domain(
         &self,
         Parameters(params): Parameters<CheckDomainParams>,
     ) -> Result<CallToolResult, McpError> {
-        let result = checker::check_domain(&params.domain).await;
+        let opts = CheckOptions {
+            probe: params.probe.unwrap_or(true),
+        };
+        let result = checker::check_domain(&params.domain, &opts).await;
         let json = serde_json::to_string_pretty(&result)
             .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))?;
         Ok(CallToolResult::success(vec![Content::text(json)]))
     }
 
     #[rmcp::tool(
-        description = "Check multiple domain names for availability. Runs lookups concurrently for efficiency."
+        description = "Check multiple domain names for availability. Runs lookups concurrently. For registered domains, probes the site to classify it as active, parked, redirect, or unreachable."
     )]
     async fn check_domains(
         &self,
@@ -68,7 +79,10 @@ impl ParkedMcp {
                 None,
             ));
         }
-        let results = checker::check_domains(&params.domains).await;
+        let opts = CheckOptions {
+            probe: params.probe.unwrap_or(true),
+        };
+        let results = checker::check_domains(&params.domains, &opts).await;
         let json = serde_json::to_string_pretty(&results)
             .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))?;
         Ok(CallToolResult::success(vec![Content::text(json)]))
@@ -81,8 +95,9 @@ impl ServerHandler for ParkedMcp {
         ServerInfo {
             instructions: Some(
                 "Domain availability checker. Use check_domain for a single domain \
-                 or check_domains for bulk lookups. Results include availability status \
-                 and which tier (DNS/WHOIS/RDAP) determined the result."
+                 or check_domains for bulk lookups. Results include availability status, \
+                 which tier (DNS/WHOIS/RDAP) determined the result, and for registered \
+                 domains, a site classification (active, parked, redirect, or unreachable)."
                     .into(),
             ),
             capabilities: ServerCapabilities::builder().enable_tools().build(),

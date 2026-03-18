@@ -1,108 +1,97 @@
 use crate::types::*;
-use crate::{dns, rdap, whois};
+use crate::{dns, probe, rdap, whois};
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::Semaphore;
 
-pub async fn check_domain(domain: &str) -> DomainResult {
-    let start = Instant::now();
-    let domain = domain.trim().to_lowercase();
+#[derive(Debug, Clone)]
+pub struct CheckOptions {
+    pub probe: bool,
+}
+
+impl Default for CheckOptions {
+    fn default() -> Self {
+        Self { probe: true }
+    }
+}
+
+async fn check_tiers(domain: &str) -> (Availability, Tier, TierDetails) {
     let mut details = TierDetails::default();
 
     // Tier 1: DNS
-    match dns::lookup(&domain).await {
+    match dns::lookup(domain).await {
         Ok(dns_info) => {
             let has_records = dns_info.has_records;
             details.dns = Some(dns_info);
             if has_records {
-                return DomainResult {
-                    domain,
-                    available: Availability::Registered,
-                    determined_by: Tier::Dns,
-                    details,
-                    elapsed_ms: start.elapsed().as_millis() as u64,
-                };
+                return (Availability::Registered, Tier::Dns, details);
             }
         }
-        Err(_) => {
-            // DNS lookup failed entirely, continue to next tier
-        }
+        Err(_) => {}
     }
 
     // Tier 2: WHOIS
-    match whois::lookup(&domain).await {
+    match whois::lookup(domain).await {
         Ok(whois_info) => {
             let found = whois_info.found;
             details.whois = Some(whois_info);
             if found {
-                return DomainResult {
-                    domain,
-                    available: Availability::Registered,
-                    determined_by: Tier::Whois,
-                    details,
-                    elapsed_ms: start.elapsed().as_millis() as u64,
-                };
+                return (Availability::Registered, Tier::Whois, details);
             } else {
-                return DomainResult {
-                    domain,
-                    available: Availability::Available,
-                    determined_by: Tier::Whois,
-                    details,
-                    elapsed_ms: start.elapsed().as_millis() as u64,
-                };
+                return (Availability::Available, Tier::Whois, details);
             }
         }
-        Err(_) => {
-            // WHOIS failed, continue to RDAP
-        }
+        Err(_) => {}
     }
 
     // Tier 3: RDAP
-    match rdap::lookup(&domain).await {
+    match rdap::lookup(domain).await {
         Ok(rdap_info) => {
             let found = rdap_info.found;
             details.rdap = Some(rdap_info);
             if found {
-                return DomainResult {
-                    domain,
-                    available: Availability::Registered,
-                    determined_by: Tier::Rdap,
-                    details,
-                    elapsed_ms: start.elapsed().as_millis() as u64,
-                };
-            }
-            // RDAP says not found → available
-            DomainResult {
-                domain,
-                available: Availability::Available,
-                determined_by: Tier::Rdap,
-                details,
-                elapsed_ms: start.elapsed().as_millis() as u64,
+                (Availability::Registered, Tier::Rdap, details)
+            } else {
+                (Availability::Available, Tier::Rdap, details)
             }
         }
-        Err(_) => {
-            // All tiers failed or inconclusive
-            DomainResult {
-                domain,
-                available: Availability::Unknown,
-                determined_by: Tier::Rdap,
-                details,
-                elapsed_ms: start.elapsed().as_millis() as u64,
-            }
-        }
+        Err(_) => (Availability::Unknown, Tier::Rdap, details),
     }
 }
 
-pub async fn check_domains(domains: &[String]) -> Vec<DomainResult> {
+pub async fn check_domain(domain: &str, opts: &CheckOptions) -> DomainResult {
+    let start = Instant::now();
+    let domain = domain.trim().to_lowercase();
+
+    let (available, determined_by, details) = check_tiers(&domain).await;
+
+    let site = if opts.probe && available == Availability::Registered {
+        Some(probe::classify(&domain).await)
+    } else {
+        None
+    };
+
+    DomainResult {
+        domain,
+        available,
+        determined_by,
+        details,
+        site,
+        elapsed_ms: start.elapsed().as_millis() as u64,
+    }
+}
+
+pub async fn check_domains(domains: &[String], opts: &CheckOptions) -> Vec<DomainResult> {
     let semaphore = Arc::new(Semaphore::new(10));
     let mut handles = Vec::new();
 
     for domain in domains {
         let domain = domain.clone();
         let sem = Arc::clone(&semaphore);
+        let opts = opts.clone();
         handles.push(tokio::spawn(async move {
             let _permit = sem.acquire().await.unwrap();
-            check_domain(&domain).await
+            check_domain(&domain, &opts).await
         }));
     }
 

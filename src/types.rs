@@ -16,12 +16,33 @@ pub enum Tier {
     Rdap,
 }
 
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum SiteClassification {
+    Parked,
+    Active,
+    Redirect,
+    Unreachable,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ProbeInfo {
+    pub classification: SiteClassification,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub final_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status_code: Option<u16>,
+    pub reason: String,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct DomainResult {
     pub domain: String,
     pub available: Availability,
     pub determined_by: Tier,
     pub details: TierDetails,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub site: Option<ProbeInfo>,
     pub elapsed_ms: u64,
 }
 
@@ -72,6 +93,17 @@ impl std::fmt::Display for Tier {
             Tier::Dns => write!(f, "dns"),
             Tier::Whois => write!(f, "whois"),
             Tier::Rdap => write!(f, "rdap"),
+        }
+    }
+}
+
+impl std::fmt::Display for SiteClassification {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SiteClassification::Parked => write!(f, "parked"),
+            SiteClassification::Active => write!(f, "active"),
+            SiteClassification::Redirect => write!(f, "redirect"),
+            SiteClassification::Unreachable => write!(f, "unreachable"),
         }
     }
 }
