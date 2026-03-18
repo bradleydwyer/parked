@@ -1,4 +1,31 @@
 use parked::checker;
+
+const COMMON_TLDS: &[&str] = &[
+    // Generic
+    "com", "net", "org", "info", "biz",
+    // Tech / dev
+    "io", "dev", "app", "sh", "ai", "co", "run", "build", "codes", "tools", "tech", "cloud",
+    "pro", "engineer", "software",
+    // Short / brandable
+    "xyz", "me", "cc", "tv", "gg", "lol", "wtf", "fyi", "one", "plus",
+    // Descriptive
+    "land", "page", "site", "space", "zone", "works", "world", "live", "team",
+    // Country codes
+    "us", "uk", "de", "fr", "nl", "se", "no", "fi", "ch", "at", "be", "dk", "ie", "nz", "au",
+    "ca", "mx", "br", "ar", "jp", "kr", "tw", "hk", "sg", "ph", "th", "vn", "id", "my", "za",
+    "in", "it", "is", "to", "fm", "ly", "so",
+];
+
+fn expand_all_tlds(names: &[String]) -> Vec<String> {
+    names
+        .iter()
+        .flat_map(|name| {
+            // Strip any existing TLD if present (e.g. "equip.com" -> "equip")
+            let base = name.split('.').next().unwrap_or(name);
+            COMMON_TLDS.iter().map(move |tld| format!("{base}.{tld}"))
+        })
+        .collect()
+}
 use parked::mcp::ParkedMcp;
 use rmcp::{ServiceExt, transport::stdio};
 
@@ -24,6 +51,10 @@ struct Cli {
     /// Show tier-by-tier details
     #[arg(short, long)]
     verbose: bool,
+
+    /// Check a name across all common TLDs (pass name without TLD)
+    #[arg(long)]
+    all_tlds: bool,
 }
 
 #[derive(Subcommand)]
@@ -51,7 +82,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(1);
     }
 
-    let results = checker::check_domains(&cli.domains).await;
+    let domains = if cli.all_tlds {
+        expand_all_tlds(&cli.domains)
+    } else {
+        cli.domains.clone()
+    };
+
+    let results = checker::check_domains(&domains).await;
 
     if cli.json {
         println!("{}", serde_json::to_string_pretty(&results)?);
