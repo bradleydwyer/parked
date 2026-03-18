@@ -10,28 +10,26 @@ pub async fn lookup(domain: &str) -> Result<DnsInfo, String> {
     let mut record_types = Vec::new();
 
     // Check NS records first — most reliable indicator of registration
-    if let Ok(response) = resolver.lookup(domain, RecordType::NS).await {
-        if response.iter().next().is_some() {
-            record_types.push("NS".to_string());
-        }
+    if let Ok(response) = resolver.lookup(domain, RecordType::NS).await
+        && response.iter().next().is_some()
+    {
+        record_types.push("NS".to_string());
     }
 
     // Also check A records as fallback
-    if record_types.is_empty() {
-        if let Ok(response) = resolver.lookup(domain, RecordType::A).await {
-            if response.iter().next().is_some() {
-                record_types.push("A".to_string());
-            }
-        }
+    if record_types.is_empty()
+        && let Ok(response) = resolver.lookup(domain, RecordType::A).await
+        && response.iter().next().is_some()
+    {
+        record_types.push("A".to_string());
     }
 
     // Check AAAA if still nothing
-    if record_types.is_empty() {
-        if let Ok(response) = resolver.lookup(domain, RecordType::AAAA).await {
-            if response.iter().next().is_some() {
-                record_types.push("AAAA".to_string());
-            }
-        }
+    if record_types.is_empty()
+        && let Ok(response) = resolver.lookup(domain, RecordType::AAAA).await
+        && response.iter().next().is_some()
+    {
+        record_types.push("AAAA".to_string());
     }
 
     let has_records = !record_types.is_empty();

@@ -19,29 +19,23 @@ async fn check_tiers(domain: &str) -> (Availability, Tier, TierDetails) {
     let mut details = TierDetails::default();
 
     // Tier 1: DNS
-    match dns::lookup(domain).await {
-        Ok(dns_info) => {
-            let has_records = dns_info.has_records;
-            details.dns = Some(dns_info);
-            if has_records {
-                return (Availability::Registered, Tier::Dns, details);
-            }
+    if let Ok(dns_info) = dns::lookup(domain).await {
+        let has_records = dns_info.has_records;
+        details.dns = Some(dns_info);
+        if has_records {
+            return (Availability::Registered, Tier::Dns, details);
         }
-        Err(_) => {}
     }
 
     // Tier 2: WHOIS
-    match whois::lookup(domain).await {
-        Ok(whois_info) => {
-            let found = whois_info.found;
-            details.whois = Some(whois_info);
-            if found {
-                return (Availability::Registered, Tier::Whois, details);
-            } else {
-                return (Availability::Available, Tier::Whois, details);
-            }
+    if let Ok(whois_info) = whois::lookup(domain).await {
+        let found = whois_info.found;
+        details.whois = Some(whois_info);
+        if found {
+            return (Availability::Registered, Tier::Whois, details);
+        } else {
+            return (Availability::Available, Tier::Whois, details);
         }
-        Err(_) => {}
     }
 
     // Tier 3: RDAP

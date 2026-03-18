@@ -109,7 +109,7 @@ pub async fn lookup(domain: &str) -> Result<WhoisInfo, String> {
             let l = line.to_lowercase();
             l.starts_with("registrar:") || l.starts_with("   registrar:")
         })
-        .map(|line| line.splitn(2, ':').nth(1).unwrap_or("").trim().to_string());
+        .and_then(|line| line.split_once(':').map(|(_, v)| v.trim().to_string()));
 
     // Extract creation date
     let creation_date = raw_response
@@ -118,7 +118,7 @@ pub async fn lookup(domain: &str) -> Result<WhoisInfo, String> {
             let l = line.to_lowercase();
             l.contains("creation date") || l.contains("created") || l.contains("registration date")
         })
-        .map(|line| line.splitn(2, ':').nth(1).unwrap_or("").trim().to_string());
+        .and_then(|line| line.split_once(':').map(|(_, v)| v.trim().to_string()));
 
     let found = !is_not_found && (registrar.is_some() || creation_date.is_some());
 

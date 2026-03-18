@@ -33,15 +33,14 @@ async fn get_rdap_servers(client: &Client) -> Result<HashMap<String, String>, St
 
     let mut map = HashMap::new();
     for service in &bootstrap.services {
-        if service.len() >= 2 {
-            if let (Some(tlds), Some(urls)) = (service[0].as_array(), service[1].as_array()) {
-                if let Some(url) = urls.first().and_then(|u| u.as_str()) {
-                    let base = url.trim_end_matches('/').to_string();
-                    for tld in tlds {
-                        if let Some(t) = tld.as_str() {
-                            map.insert(t.to_lowercase(), base.clone());
-                        }
-                    }
+        if service.len() >= 2
+            && let (Some(tlds), Some(urls)) = (service[0].as_array(), service[1].as_array())
+            && let Some(url) = urls.first().and_then(|u| u.as_str())
+        {
+            let base = url.trim_end_matches('/').to_string();
+            for tld in tlds {
+                if let Some(t) = tld.as_str() {
+                    map.insert(t.to_lowercase(), base.clone());
                 }
             }
         }
