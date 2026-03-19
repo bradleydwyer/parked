@@ -11,10 +11,8 @@ fn expand_all_tlds(names: &[String]) -> Vec<String> {
         })
         .collect()
 }
-use parked::mcp::ParkedMcp;
-use rmcp::{ServiceExt, transport::stdio};
 
-use clap::{Parser, Subcommand};
+use clap::Parser;
 
 #[derive(Parser)]
 #[command(
@@ -23,9 +21,6 @@ use clap::{Parser, Subcommand};
     version
 )]
 struct Cli {
-    #[command(subcommand)]
-    command: Option<Command>,
-
     /// Domain names to check
     domains: Vec<String>,
 
@@ -46,26 +41,12 @@ struct Cli {
     no_probe: bool,
 }
 
-#[derive(Subcommand)]
-enum Command {
-    /// Start MCP server (stdio transport)
-    Mcp,
-}
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
-    if let Some(Command::Mcp) = cli.command {
-        let server = ParkedMcp::new();
-        let service = server.serve(stdio()).await?;
-        service.waiting().await?;
-        return Ok(());
-    }
-
     if cli.domains.is_empty() {
         eprintln!("Usage: parked [OPTIONS] <DOMAINS>...");
-        eprintln!("       parked mcp");
         eprintln!();
         eprintln!("Run 'parked --help' for more information.");
         std::process::exit(1);

@@ -6,8 +6,6 @@
 
 Check if a domain name is registered. Uses tiered lookups: DNS first (fast), then WHOIS, then RDAP.
 
-Also runs as an MCP server.
-
 ## Install
 
 ```bash
@@ -64,32 +62,6 @@ parked -j example.com
     "elapsed_ms": 45
   }
 ]
-```
-
-### MCP server
-
-```bash
-parked mcp
-```
-
-Two tools over stdio:
-
-| Tool | Description |
-|------|-------------|
-| `check_domain` | Check a single domain |
-| `check_domains` | Check up to 50 domains concurrently |
-
-Claude Code config:
-
-```json
-{
-  "mcpServers": {
-    "parked": {
-      "command": "/path/to/parked",
-      "args": ["mcp"]
-    }
-  }
-}
 ```
 
 ## How it works
