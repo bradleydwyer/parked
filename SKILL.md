@@ -7,7 +7,7 @@ user-invocable: true
 argument-hint: "<domain or space-separated domains>"
 metadata:
   author: bradleydwyer
-  version: "0.1.0"
+  version: "2.2.2"
   status: experimental
 ---
 
