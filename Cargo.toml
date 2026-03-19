@@ -1,6 +1,6 @@
 [package]
 name = "parked"
-version = "2.2.4"
+version = "2.2.5"
 edition = "2024"
 description = "Tiered domain availability checker (DNS → WHOIS → RDAP) with CLI and MCP server"
 license = "MIT"

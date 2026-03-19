@@ -200,12 +200,12 @@ fn strip_tags(html: &str) -> String {
 
     while i < len {
         if !in_tag && bytes[i] == b'<' {
-            // Check for <script
-            if i + 7 < len && &html[i..i + 7] == "<script" {
+            // Check for <script (compare bytes directly to avoid UTF-8 boundary issues)
+            if i + 7 < len && &bytes[i..i + 7] == b"<script" {
                 in_script = true;
             }
-            // Check for </script
-            if i + 9 < len && &html[i..i + 9] == "</script>" {
+            // Check for </script>
+            if i + 9 < len && &bytes[i..i + 9] == b"</script>" {
                 in_script = false;
                 i += 9;
                 continue;
