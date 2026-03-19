@@ -107,3 +107,16 @@ Built-in WHOIS server mappings for 30+ TLDs, plus IANA bootstrap for RDAP.
 ## License
 
 MIT
+
+## More Tools
+
+**Naming & Availability**
+- [available](https://github.com/bradleydwyer/available) — AI-powered project name finder (uses parked, staked & published)
+- [staked](https://github.com/bradleydwyer/staked) — Package registry name checker (npm, PyPI, crates.io + 19 more)
+- [published](https://github.com/bradleydwyer/published) — App store name checker (App Store & Google Play)
+
+**AI Tooling**
+- [sloppy](https://github.com/bradleydwyer/sloppy) — AI prose/slop detector
+- [caucus](https://github.com/bradleydwyer/caucus) — Multi-LLM consensus engine
+- [nanaban](https://github.com/bradleydwyer/nanaban) — Gemini image generation CLI
+- [equip](https://github.com/bradleydwyer/equip) — Cross-agent skill manager
